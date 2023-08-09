@@ -143,7 +143,7 @@ systemctl --root "$rootmnt" mask systemd-networkd
 echo "Generating UKI and installing Boot Loader..."
 arch-chroot "$rootmnt" mkinitcpio -p linux
 echo "Setting up Secure Boot..."
-if [[ "$(efivar -dD --name 8be4df61-93ca-11d2-aa0d-00e098032b8c-SetupMode)" -eq 1 ]]; then
+if [[ "$(efivar -d --name 8be4df61-93ca-11d2-aa0d-00e098032b8c-SetupMode)" -eq 1 ]]; then
 arch-chroot "$rootmnt" sbctl create-keys
 arch-chroot "$rootmnt" sbctl enroll-keys -m
 arch-chroot "$rootmnt" sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
