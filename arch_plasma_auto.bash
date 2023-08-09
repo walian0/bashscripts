@@ -105,7 +105,7 @@ systemd-firstboot --root "$rootmnt" \
 arch-chroot "$rootmnt" locale-gen
 echo "Configuring for first boot..."
 #add the local user
-arch-chroot "$rootmnt" useradd -G wheel -m "$username" -p "$user_password"
+arch-chroot "$rootmnt" useradd -G wheel -m -p "$user_password" "$username" 
 #uncomment the wheel group in the sudoers file
 sed -i -e '/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/s/^# //' "$rootmnt"/etc/sudoers
 #create a basic kernel cmdline, we're using DPS so we don't need to have anything here really, but if the file doesn't exist, mkinitcpio will complain
