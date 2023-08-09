@@ -111,14 +111,19 @@ sed -i -e '/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/s/^# //' "$rootmnt"/etc/sudoer
 #create a basic kernel cmdline, we're using DPS so we don't need to have anything here really, but if the file doesn't exist, mkinitcpio will complain
 echo "quiet rw" > "$rootmnt"/etc/kernel/cmdline
 #change the HOOKS in mkinitcpio.conf to use systemd hooks
-sed -i -e 's/base udev/base systemd/g' "$rootmnt"/etc/mkinitcpio.conf
-sed -i -e 's/keymap consolefont/sd-vconsole sd-encrypt/g' "$rootmnt"/etc/mkinitcpio.conf
+sed -i \
+    -e 's/base udev/base systemd/g' \
+    -e 's/keymap consolefont/sd-vconsole sd-encrypt/g' \
+    "$rootmnt"/etc/mkinitcpio.conf
 #change the preset file to generate a Unified Kernel Image instead of an initram disk + kernel
-sed -i -e '/^#ALL_config/s/^#//' "$rootmnt"/etc/mkinitcpio.d/linux.preset
-sed -i -e '/^#default_uki/s/^#//' "$rootmnt"/etc/mkinitcpio.d/linux.preset
-sed -i -e '/^#default_options/s/^#//' "$rootmnt"/etc/mkinitcpio.d/linux.preset
-sed -i -e 's/default_image=/#default_image=/g' "$rootmnt"/etc/mkinitcpio.d/linux.preset
-sed -i -e "s/PRESETS=('default' 'fallback')/PRESETS=('default')/g" "$rootmnt"/etc/mkinitcpio.d/linux.preset
+sed -i \
+    -e '/^#ALL_config/s/^#//' \
+    -e '/^#default_uki/s/^#//' \
+    -e '/^#default_options/s/^#//' \
+    -e 's/default_image=/#default_image=/g' \
+    -e "s/PRESETS=('default' 'fallback')/PRESETS=('default')/g" \
+    "$rootmnt"/etc/mkinitcpio.d/linux.preset
+
 #read the UKI setting and create the folder structure otherwise mkinitcpio will crash
 declare $(grep default_uki "$rootmnt"/etc/mkinitcpio.d/linux.preset)
 arch-chroot "$rootmnt" mkdir -p "$(dirname "${default_uki//\"}")"
@@ -145,5 +150,7 @@ echo "-----------------------------------"
 echo "- Install complete. Rebooting.... -"
 echo "-----------------------------------"
 sleep 10
+sync
 reboot
+
 
