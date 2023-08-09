@@ -16,12 +16,13 @@ keymap="uk"
 timezone="Europe/London"
 hostname="arch-test"
 username="walian"
-#SHA512 hash of password. To generate, run 'mkpasswd -m sha-512', don't forget to prefix any $ symbols with \
-password="\$6\$gdXMvJO/qaLsU4e7\$wbrqLL51huQPKSV0vOVWuuvu3MgRqyYwr8A6gYCd8SUMvVBZWD16fV5nxh50ITModC4WHR0XzX8MhYjq1SB5.0"
+
+
 #To fully automate the setup, enter a password here, and change badidea=no to yes, and enter a cleartext password. 
 
 badidea="no"
-cryptpass=""
+user_password="changeme"
+crypt_password="changeme"
 
 
 ### Packages to pacstrap ##
@@ -67,8 +68,8 @@ sleep 2
 echo "Encrypting root partition..."
 #Encrypt the root partition. If badidea=yes, then pipe cryptpass and carry on, if not, prompt for it
 if [[ "$badidea" = "yes" ]]; then
-echo -n "$cryptpass" | cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux -
-echo -n "$cryptpass" | cryptsetup luksOpen /dev/disk/by-partlabel/linux root -
+echo -n "$crypt_password" | cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux -
+echo -n "$crypt_password" | cryptsetup luksOpen /dev/disk/by-partlabel/linux root -
 else
 cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux
 cryptsetup luksOpen /dev/disk/by-partlabel/linux root
@@ -91,7 +92,12 @@ reflector --country GB --age 24 --protocol http,https --sort rate --save /etc/pa
 pacstrap -K $rootmnt "${pacstrappacs[@]}" 
 #add the local user
 clear
-arch-chroot "$rootmnt" useradd -G wheel -m "$username" -p "$password"
+if [[ "$badidea" = "yes" ]]; then
+arch-chroot "$rootmnt" useradd -G wheel -m "$username" -p "$user_password"
+else
+arch-chroot "$rootmnt" useradd -G wheel -m "$username"
+echo "Enter a password for ${username}:"
+arch-chroot "$rootmnt" passwd "$username"
 #uncomment the wheel group in the sudoers file
 sed -i -e '/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/s/^# //' "$rootmnt"/etc/sudoers
 echo "Setting up environment..."
