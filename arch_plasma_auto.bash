@@ -126,7 +126,7 @@ sed -i -e 's/default_image=/#default_image=/g' "$rootmnt"/etc/mkinitcpio.d/linux
 sed -i -e "s/PRESETS=('default' 'fallback')/PRESETS=('default')/g" "$rootmnt"/etc/mkinitcpio.d/linux.preset
 #read the UKI setting and create the folder structure otherwise mkinitcpio will crash
 declare $(grep default_uki "$rootmnt"/etc/mkinitcpio.d/linux.preset)
-mkdir -p "$(dirname "${default_uki//\"}")"
+arch-chroot "$rootmnt" mkdir -p "$(dirname "${default_uki//\"}")"
 
 #install the gui packages
 echo "Installing GUI..."
