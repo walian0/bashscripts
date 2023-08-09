@@ -49,6 +49,7 @@ guipacs=(
 	nm-connection-editor
 	neofetch
 	mousepad
+ 	sbctl
 	)
 
 
@@ -131,6 +132,8 @@ arch-chroot "$rootmnt" mkdir -p "$(dirname "${default_uki//\"}")"
 #install the gui packages
 echo "Installing GUI..."
 arch-chroot "$rootmnt" pacman -Sy "${guipacs[@]}" --noconfirm --quiet
+
+
 #enable the services we will need on start up
 echo "Enabling services..."
 systemctl --root "$rootmnt" enable systemd-resolved systemd-timesyncd NetworkManager sddm
@@ -139,6 +142,15 @@ systemctl --root "$rootmnt" mask systemd-networkd
 #regenerate the ramdisk, this will create our UKI
 echo "Generating UKI and installing Boot Loader..."
 arch-chroot "$rootmnt" mkinitcpio -p linux
+echo "Setting up Secure Boot..."
+if [[ "$(efivar -dD --name 8be4df61-93ca-11d2-aa0d-00e098032b8c-SetupMode)" -eq 1 ]]; then
+arch-chroot "$rootmnt" sbctl create-keys
+arch-chroot "$rootmnt" sbctl enroll-keys -m
+arch-chroot "$rootmnt" sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+arch-chroot "$rootmnt" sbctl sign -s "${default_uki//\"}"
+else
+echo "Not in Secure Boot setup mode. Skipping..."
+fi
 #install the systemd-boot bootloader
 arch-chroot "$rootmnt" bootctl install --esp-path=/efi
 #lock the root account
