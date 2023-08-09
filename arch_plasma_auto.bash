@@ -1,6 +1,6 @@
 #!/bin/bash
 # uncomment to view debugging information 
-set -xeuo pipefail
+#set -xeuo pipefail
 
 #check if we're root
 if [[ "$UID" -ne 0 ]]; then
@@ -60,15 +60,17 @@ guipacs=(
 
 
 # Partition
+echo "Creating partitions..."
 sgdisk -Z "$target"
 sgdisk \
     -n1:0:+512M  -t1:ef00 -c1:EFISYSTEM \
     -N2          -t2:8304 -c2:linux \
     "$target"
 # Reload partition table
-sleep 3
+sleep 2
 partprobe -s "$target"
-sleep 3
+sleep 2
+echo "Encrypting root partition..."
 #Encrypt the root partition. If badidea=yes, then pipe cryptpass and carry on, if not, prompt for it
 if [[ "$badidea" == "yes" ]] [[ "$badidea" == "random" ]]; then
 echo -n "$cryptpass" | cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux -
@@ -77,14 +79,18 @@ else
 cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux
 cryptsetup luksOpen /dev/disk/by-partlabel/linux root
 fi
-
+echo "Making File Systems..."
 # Create file systems
 mkfs.vfat -F32 -n EFISYSTEM /dev/disk/by-partlabel/EFISYSTEM
 mkfs.ext4 -L linux /dev/mapper/root
 # mount the root, and create + mount the EFI directory
+echo "Mounting File Systems..."
 mount /dev/mapper/root "$rootmnt"
 mkdir "$rootmnt"/efi -p
 mount -t vfat /dev/disk/by-partlabel/EFISYSTEM "$rootmnt"/efi
+
+
+
 #Update pacman mirrors and then pacstrap base install
 echo "Pacstrapping..."
 reflector --country GB --age 24 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
@@ -123,19 +129,22 @@ declare $(grep default_uki "$rootmnt"/etc/mkinitcpio.d/linux.preset)
 mkdir -p "$(dirname "${default_uki//\"}")"
 
 #install the gui packages
+echo "Installing GUI..."
 arch-chroot "$rootmnt" pacman -Sy "${guipacs[@]}" --noconfirm --quiet
 #enable the services we will need on start up
+echo "Enabling services..."
 systemctl --root "$rootmnt" enable systemd-resolved systemd-timesyncd NetworkManager sddm
 #mask systemd-networkd as we will use NetworkManager instead
 systemctl --root "$rootmnt" mask systemd-networkd
 #regenerate the ramdisk, this will create our UKI
+echo "Generating UKI and installing Boot Loader..."
 arch-chroot "$rootmnt" mkinitcpio -p linux
 #install the systemd-boot bootloader
 arch-chroot "$rootmnt" bootctl install
 #lock the root account
 arch-chroot "$rootmnt" usermod -L root
 #and we're done
-
+clear
 echo "-----------------------------------"
 echo "- Install complete. Please reboot -"
 echo "-----------------------------------"
