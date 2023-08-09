@@ -21,7 +21,7 @@ password="\$6\$gdXMvJO/qaLsU4e7\$wbrqLL51huQPKSV0vOVWuuvu3MgRqyYwr8A6gYCd8SUMvVB
 #To fully automate the setup, enter a password here, and change badidea=no to yes, and enter a cleartext password. 
 
 badidea="no"
-cryptpass=
+cryptpass=""
 
 
 ### Packages to pacstrap ##
@@ -37,6 +37,7 @@ pacstrappacs=(
         e2fsprogs
         dosfstools
         sudo
+        networkmanager
         )    
 ### Desktop packages #####
 guipacs=(
@@ -44,7 +45,6 @@ guipacs=(
 	sddm 
 	kitty
 	firefox 
-	networkmanager
 	nm-connection-editor
 	neofetch
 	mousepad
