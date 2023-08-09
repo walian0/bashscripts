@@ -142,6 +142,8 @@ arch-chroot "$rootmnt" usermod -L root
 
 
 echo "-----------------------------------"
-echo "- Install complete. Please reboot -"
+echo "- Install complete. Rebooting.... -"
 echo "-----------------------------------"
+sleep 10
+reboot
 
