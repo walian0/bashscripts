@@ -19,16 +19,10 @@ username="walian"
 #SHA512 hash of password. To generate, run 'mkpasswd -m sha-512', don't forget to prefix any $ symbols with \
 password="\$6\$gdXMvJO/qaLsU4e7\$wbrqLL51huQPKSV0vOVWuuvu3MgRqyYwr8A6gYCd8SUMvVBZWD16fV5nxh50ITModC4WHR0XzX8MhYjq1SB5.0"
 #To fully automate the setup, enter a password here, and change badidea=no to yes, and enter a cleartext password. 
-#For a random password, change badidea=no, to random. If badidea=no, then cryptsetup will prompt for a password
-badidea=no
+
+badidea="no"
 cryptpass=
 
-
-#generate a random password if badidea=random
-if [[ "$badidea" == "random" ]]; then
-    pacman -Sq xkcdpass --noconfirm || 
-    cryptpass=$(xkcdpass --delimiter "-")
-fi
 
 ### Packages to pacstrap ##
 pacstrappacs=(
@@ -72,7 +66,7 @@ partprobe -s "$target"
 sleep 2
 echo "Encrypting root partition..."
 #Encrypt the root partition. If badidea=yes, then pipe cryptpass and carry on, if not, prompt for it
-if [[ "$badidea" == "yes" ]] || [[ "$badidea" == "random" ]]; then
+if [[ "$badidea" = "yes" ]]; then
 echo -n "$cryptpass" | cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux -
 echo -n "$cryptpass" | cryptsetup luksOpen /dev/disk/by-partlabel/linux root -
 else
@@ -149,10 +143,4 @@ arch-chroot "$rootmnt" usermod -L root
 echo "-----------------------------------"
 echo "- Install complete. Please reboot -"
 echo "-----------------------------------"
-if [[ "$badidea" == "random" ]]; then
-echo "Your LUKS password is:"
-echo "$cryptpass"
-echo ""
-echo "Make a note of this. It will not be saved anywhere."
-fi
 
