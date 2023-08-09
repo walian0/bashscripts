@@ -1,6 +1,6 @@
 #!/bin/bash
 # uncomment to view debugging information 
-set -xeuo pipefail
+#set -xeuo pipefail
 
 #check if we're root
 if [[ "$UID" -ne 0 ]]; then
@@ -16,12 +16,12 @@ keymap="uk"
 timezone="Europe/London"
 hostname="arch-test"
 username="walian"
+#SHA512 hash of password. To generate, run 'mkpasswd -m sha-512', don't forget to prefix any $ symbols with \ . The entry below is the hash of 'password'
+user_password="\$6\$/VBa6GuBiFiBmi6Q\$yNALrCViVtDDNjyGBsDG7IbnNR0Y/Tda5Uz8ToyxXXpw86XuCVAlhXlIvzy1M8O.DWFB6TRCia0hMuAJiXOZy/"
 
-
-#To fully automate the setup, enter a password here, and change badidea=no to yes, and enter a cleartext password. 
+#To fully automate the setup, change badidea=no to yes, and enter a cleartext password for the disk encryption 
 
 badidea="no"
-user_password="changeme"
 crypt_password="changeme"
 
 
@@ -90,16 +90,7 @@ mount -t vfat /dev/disk/by-partlabel/EFISYSTEM "$rootmnt"/efi
 echo "Pacstrapping..."
 reflector --country GB --age 24 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
 pacstrap -K $rootmnt "${pacstrappacs[@]}" 
-#add the local user
-clear
-if [[ "$badidea" = "yes" ]]; then
-arch-chroot "$rootmnt" useradd -G wheel -m "$username" -p "$user_password"
-else
-arch-chroot "$rootmnt" useradd -G wheel -m "$username"
-echo "Enter a password for ${username}:"
-arch-chroot "$rootmnt" passwd "$username"
-#uncomment the wheel group in the sudoers file
-sed -i -e '/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/s/^# //' "$rootmnt"/etc/sudoers
+
 echo "Setting up environment..."
 #set up locale/env
 #add our locale to locale.gen
@@ -113,6 +104,10 @@ systemd-firstboot --root "$rootmnt" \
 	--welcome=false
 arch-chroot "$rootmnt" locale-gen
 echo "Configuring for first boot..."
+#add the local user
+arch-chroot "$rootmnt" useradd -G wheel -m "$username" -p "$user_password"
+#uncomment the wheel group in the sudoers file
+sed -i -e '/^# %wheel ALL=(ALL:ALL) NOPASSWD: ALL/s/^# //' "$rootmnt"/etc/sudoers
 #create a basic kernel cmdline, we're using DPS so we don't need to have anything here really, but if the file doesn't exist, mkinitcpio will complain
 echo "quiet rw" > "$rootmnt"/etc/kernel/cmdline
 #change the HOOKS in mkinitcpio.conf to use systemd hooks
@@ -140,7 +135,7 @@ systemctl --root "$rootmnt" mask systemd-networkd
 echo "Generating UKI and installing Boot Loader..."
 arch-chroot "$rootmnt" mkinitcpio -p linux
 #install the systemd-boot bootloader
-arch-chroot "$rootmnt" bootctl install
+arch-chroot "$rootmnt" bootctl install --esp-path=/efi
 #lock the root account
 arch-chroot "$rootmnt" usermod -L root
 #and we're done
