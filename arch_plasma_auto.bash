@@ -67,7 +67,7 @@ partprobe -s "$target"
 sleep 2
 echo "Encrypting root partition..."
 #Encrypt the root partition. If badidea=yes, then pipe cryptpass and carry on, if not, prompt for it
-if [[ "$badidea" = "yes" ]]; then
+if [[ "$badidea" == "yes" ]]; then
 echo -n "$crypt_password" | cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux -
 echo -n "$crypt_password" | cryptsetup luksOpen /dev/disk/by-partlabel/linux root -
 else
