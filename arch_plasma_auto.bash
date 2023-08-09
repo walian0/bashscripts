@@ -1,6 +1,6 @@
 #!/bin/bash
 # uncomment to view debugging information 
-#set -xeuo pipefail
+set -xeuo pipefail
 
 #check if we're root
 if [[ "$UID" -ne 0 ]]; then
@@ -72,7 +72,7 @@ partprobe -s "$target"
 sleep 2
 echo "Encrypting root partition..."
 #Encrypt the root partition. If badidea=yes, then pipe cryptpass and carry on, if not, prompt for it
-if [[ "$badidea" == "yes" ]] [[ "$badidea" == "random" ]]; then
+if [[ "$badidea" == "yes" ]] || [[ "$badidea" == "random" ]]; then
 echo -n "$cryptpass" | cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/linux -
 echo -n "$cryptpass" | cryptsetup luksOpen /dev/disk/by-partlabel/linux root -
 else
@@ -144,7 +144,8 @@ arch-chroot "$rootmnt" bootctl install
 #lock the root account
 arch-chroot "$rootmnt" usermod -L root
 #and we're done
-clear
+
+
 echo "-----------------------------------"
 echo "- Install complete. Please reboot -"
 echo "-----------------------------------"
